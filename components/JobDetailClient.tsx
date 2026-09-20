@@ -21,9 +21,7 @@ import {
   Send,
   Star,
   Tag,
-  X,
-  Zap,
-  UserCircle2
+  X
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Application, calculateRemainingConnects } from "@/lib/assessment";
@@ -31,6 +29,13 @@ import { Job, startingConnects } from "@/lib/jobs";
 
 const applicationKey = "uet-applications";
 const viewsKey = "uet-client-views";
+const profileKey = "uet-candidate-profile";
+
+type CandidateProfile = {
+  name: string;
+  description: string;
+  savedAt: string;
+};
 
 function readJson<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") {
@@ -53,28 +58,35 @@ function saveJson<T>(key: string, value: T) {
 
 export function JobDetailClient({ job, mode = "candidate" }: { job: Job; mode?: "candidate" | "client" }) {
   const [applications, setApplications] = useState<Application[]>([]);
+  const [profile, setProfile] = useState<CandidateProfile | null>(null);
   const [candidateName, setCandidateName] = useState("");
   const [bidAmount, setBidAmount] = useState("");
-  const [boostConnects, setBoostConnects] = useState("");
   const [milestone, setMilestone] = useState("One milestone after complete delivery");
+  const [milestoneTitle, setMilestoneTitle] = useState("");
+  const [milestoneDescription, setMilestoneDescription] = useState("");
   const [coverLetter, setCoverLetter] = useState("");
   const [answer, setAnswer] = useState("");
   const [message, setMessage] = useState("");
   const application = applications.find((item) => item.jobId === job.id);
   const remainingConnects = calculateRemainingConnects(applications, startingConnects);
   const parsedBid = Number(bidAmount);
-  const parsedBoost = Number(boostConnects);
-  const totalConnectsForProposal = job.connectsRequired + (Number.isFinite(parsedBoost) ? parsedBoost : 0);
+  // The proposal cost is simply the job's Connects — there is no separate "boost" bid.
+  const totalConnectsForProposal = job.connectsRequired;
   const serviceFee = Number.isFinite(parsedBid) ? parsedBid * 0.1 : 0;
   const receiveAmount = Number.isFinite(parsedBid) ? parsedBid - serviceFee : 0;
-  const boostRanks = [9, 8, 7, 6].map((connects, index) => ({
-    place: `${index + 1}${index === 0 ? "st" : index === 1 ? "nd" : index === 2 ? "rd" : "th"} place`,
-    connects,
-    time: index === 0 ? "now" : `${21 + index * 8} minutes ago`
-  }));
 
   useEffect(() => {
-    setApplications(readJson<Application[]>(applicationKey, []));
+    function refreshApplications() {
+      setApplications(readJson<Application[]>(applicationKey, []));
+    }
+
+    refreshApplications();
+
+    const savedProfile = readJson<CandidateProfile | null>(profileKey, null);
+    setProfile(savedProfile);
+    if (savedProfile?.name) {
+      setCandidateName(savedProfile.name);
+    }
 
     if (mode === "client") {
       const views = readJson<string[]>(viewsKey, []);
@@ -82,20 +94,37 @@ export function JobDetailClient({ job, mode = "candidate" }: { job: Job; mode?: 
         saveJson(viewsKey, [...views, job.id]);
       }
     }
+
+    // Keep the available-connects figure in sync with what the candidate has
+    // spent elsewhere (other tabs / after returning to this page).
+    window.addEventListener("storage", refreshApplications);
+    window.addEventListener("focus", refreshApplications);
+    return () => {
+      window.removeEventListener("storage", refreshApplications);
+      window.removeEventListener("focus", refreshApplications);
+    };
   }, [job.id, mode]);
 
   useEffect(() => {
     if (application) {
       setCandidateName(application.candidateName);
       setBidAmount(String(application.bidAmount));
-      setBoostConnects(String(application.boostConnects));
       setMilestone(application.milestone);
+      setMilestoneTitle(application.milestoneTitle ?? "");
+      setMilestoneDescription(application.milestoneDescription ?? "");
       setCoverLetter(application.coverLetter);
       setAnswer(application.answer);
     }
   }, [application]);
 
   function submit() {
+    const byMilestone = milestone.includes("milestone");
+
+    if (!profile?.name?.trim() || !profile?.description?.trim()) {
+      setMessage("Please add your name and title before applying. Go to the home page and save your profile first.");
+      return;
+    }
+
     if (!candidateName.trim()) {
       setMessage("Your name is required before applying.");
       return;
@@ -106,8 +135,8 @@ export function JobDetailClient({ job, mode = "candidate" }: { job: Job; mode?: 
       return;
     }
 
-    if (!boostConnects.trim() || !Number.isFinite(parsedBoost) || parsedBoost < 0) {
-      setMessage("Please add your boosted Connects bid before applying.");
+    if (byMilestone && (!milestoneTitle.trim() || !milestoneDescription.trim())) {
+      setMessage("Please add a milestone title and description before applying.");
       return;
     }
 
@@ -122,7 +151,9 @@ export function JobDetailClient({ job, mode = "candidate" }: { job: Job; mode?: 
     }
 
     if (!application && remainingConnects < totalConnectsForProposal) {
-      setMessage("Thanks for completing this test. We will get back to you soon. Please leave this site now.");
+      setMessage(
+        `Not enough Connects for this job. You have ${remainingConnects} left and this proposal needs ${totalConnectsForProposal}. Apply to a lower-cost job or reduce your boost.`
+      );
       return;
     }
 
@@ -130,8 +161,10 @@ export function JobDetailClient({ job, mode = "candidate" }: { job: Job; mode?: 
       jobId: job.id,
       candidateName: candidateName.trim(),
       bidAmount: parsedBid,
-      boostConnects: parsedBoost,
+      boostConnects: 0,
       milestone,
+      milestoneTitle: byMilestone ? milestoneTitle.trim() : "",
+      milestoneDescription: byMilestone ? milestoneDescription.trim() : "",
       coverLetter: coverLetter.trim(),
       answer: answer.trim(),
       selectedForRecord: application?.selectedForRecord ?? false,
@@ -144,11 +177,16 @@ export function JobDetailClient({ job, mode = "candidate" }: { job: Job; mode?: 
 
     setApplications(next);
     saveJson(applicationKey, next);
-    const left = calculateRemainingConnects(next, startingConnects);
-    if (left < 40) {
-      window.location.href = "/application-complete";
-      return;
-    }
+
+    // Also push to the shared server store so this candidate's application
+    // shows up on the admin page alongside every other candidate's data.
+    void fetch("/api/applications", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...nextApplication, candidateDescription: profile?.description ?? "" })
+    }).catch(() => {
+      /* Keep the local application even if the network sync fails. */
+    });
 
     setMessage(
       application
@@ -238,6 +276,14 @@ export function JobDetailClient({ job, mode = "candidate" }: { job: Job; mode?: 
         </div>
 
         <section className="uw-proposal" id="proposal-form">
+          {mode !== "client" && (!profile?.name?.trim() || !profile?.description?.trim()) ? (
+            <div className="uw-plus-banner" role="alert">
+              <span>
+                Please add your name and title before applying. Open the{" "}
+                <Link href="/">home page</Link> and save your profile first.
+              </span>
+            </div>
+          ) : null}
           <section className="uw-form-card">
             <h2>Terms</h2>
             {mode === "client" ? (
@@ -273,6 +319,28 @@ export function JobDetailClient({ job, mode = "candidate" }: { job: Job; mode?: 
                     <label><input checked={!milestone.includes("milestone")} onChange={() => setMilestone("One project payment after complete delivery")} type="radio" /> By project</label>
                     <p>Get your entire payment at the end, when all work has been delivered.</p>
                   </div>
+                  {milestone.includes("milestone") ? (
+                    <>
+                      <div className="field">
+                        <label htmlFor="milestone-title">Milestone title</label>
+                        <input
+                          id="milestone-title"
+                          value={milestoneTitle}
+                          onChange={(event) => setMilestoneTitle(event.target.value)}
+                          placeholder="Example: Prototype delivery"
+                        />
+                      </div>
+                      <div className="field">
+                        <label htmlFor="milestone-description">Milestone description</label>
+                        <textarea
+                          id="milestone-description"
+                          value={milestoneDescription}
+                          onChange={(event) => setMilestoneDescription(event.target.value)}
+                          placeholder="Describe what this milestone delivers and when."
+                        />
+                      </div>
+                    </>
+                  ) : null}
                   <div className="field">
                     <label htmlFor="bid-amount">What is the full amount you would like to bid for this job?</label>
                     <input
@@ -346,28 +414,8 @@ export function JobDetailClient({ job, mode = "candidate" }: { job: Job; mode?: 
               </section>
 
               <section className="uw-form-card">
-                <h2>Boost your proposal (optional)</h2>
-                <p>Place a bid to move your proposal to the top of a client&apos;s list.</p>
-                <div className="field boost-field">
-                  <label htmlFor="boost-connects">Your boosted Connects bid</label>
-                  <input
-                    id="boost-connects"
-                    min="0"
-                    step="1"
-                    type="number"
-                    value={boostConnects}
-                    onChange={(event) => setBoostConnects(event.target.value)}
-                    placeholder="Required for this test, use 0 if no boost"
-                  />
-                </div>
-                <table className="uw-rank-table">
-                  <thead><tr><th>Rank</th><th>Bid <HelpCircle size={16} /></th><th><Zap size={16} /> now</th></tr></thead>
-                  <tbody>
-                    {boostRanks.map((rank) => (
-                      <tr key={rank.place}><td><UserCircle2 size={18} /> {rank.place}</td><td>{rank.connects} Connects</td><td>{rank.time}</td></tr>
-                    ))}
-                  </tbody>
-                </table>
+                <h2>Submit your proposal</h2>
+                <p>This job costs {job.connectsRequired} Connects. Review your Connects, then apply.</p>
                 <div className="connect-meter">
                   <div className="meter-line">
                     <span style={{ width: `${(remainingConnects / startingConnects) * 100}%` }} />

@@ -1,75 +1,100 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, CheckCircle2, ClipboardCheck, Eye, RefreshCcw } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { ArrowLeft, CheckCircle2, ClipboardCheck, RefreshCcw, Users } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Application, calculateFitScore, calculateRemainingConnects, getFitLabel } from "@/lib/assessment";
 import { jobs, startingConnects } from "@/lib/jobs";
 
-const applicationKey = "uet-applications";
-const viewsKey = "uet-client-views";
-const profileKey = "uet-candidate-profile";
+type Submission = Application & { candidateDescription: string; updatedAt: string };
 
-type CandidateProfile = {
-  name: string;
-  description: string;
-  savedAt: string;
+type CandidateRecord = {
+  candidateId: string;
+  candidateName: string;
+  candidateDescription: string;
+  updatedAt: string;
+  applications: Submission[];
 };
 
-function readJson<T>(key: string, fallback: T): T {
-  if (typeof window === "undefined") {
-    return fallback;
-  }
-
-  try {
-    const value = window.localStorage.getItem(key);
-    return value ? (JSON.parse(value) as T) : fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-function saveJson<T>(key: string, value: T) {
-  if (typeof window !== "undefined") {
-    window.localStorage.setItem(key, JSON.stringify(value));
-  }
-}
-
 export function AdminClient() {
-  const [applications, setApplications] = useState<Application[]>([]);
-  const [viewedJobIds, setViewedJobIds] = useState<string[]>([]);
-  const [profile, setProfile] = useState<CandidateProfile | null>(null);
+  const [candidates, setCandidates] = useState<CandidateRecord[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
-  useEffect(() => {
-    setApplications(readJson<Application[]>(applicationKey, []));
-    setViewedJobIds(readJson<string[]>(viewsKey, []));
-    setProfile(readJson<CandidateProfile | null>(profileKey, null));
+  const refresh = useCallback(async () => {
+    try {
+      const response = await fetch("/api/applications", { cache: "no-store" });
+      if (!response.ok) {
+        return;
+      }
+      const data = (await response.json()) as { candidates: CandidateRecord[] };
+      setCandidates(data.candidates ?? []);
+    } catch {
+      /* ignore transient network errors; the next poll will retry */
+    } finally {
+      setLoaded(true);
+    }
   }, []);
 
-  const score = calculateFitScore(applications, viewedJobIds);
-  const remainingConnects = calculateRemainingConnects(applications, startingConnects);
-  const candidateName = profile?.name ?? applications[0]?.candidateName ?? "No candidate yet";
-  const selectedCount = applications.filter((item) => item.selectedForRecord).length;
-  const appliedById = useMemo(() => new Map(applications.map((item) => [item.jobId, item])), [applications]);
+  useEffect(() => {
+    refresh();
 
-  function toggleRecord(jobId: string) {
-    const next = applications.map((application) =>
-      application.jobId === jobId
-        ? { ...application, selectedForRecord: !application.selectedForRecord }
-        : application
+    // Keep the admin board live so applications from every candidate appear
+    // in near real time without a manual reload.
+    const interval = window.setInterval(refresh, 4000);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [refresh]);
+
+  // Keep a valid selection as the candidate list changes.
+  useEffect(() => {
+    if (candidates.length === 0) {
+      setSelectedId(null);
+      return;
+    }
+    setSelectedId((current) =>
+      current && candidates.some((candidate) => candidate.candidateId === current)
+        ? current
+        : candidates[0].candidateId
+    );
+  }, [candidates]);
+
+  const selected = useMemo(
+    () => candidates.find((candidate) => candidate.candidateId === selectedId) ?? null,
+    [candidates, selectedId]
+  );
+
+  const totalApplications = candidates.reduce((sum, candidate) => sum + candidate.applications.length, 0);
+
+  async function toggleRecord(candidateName: string, jobId: string, current: boolean) {
+    // Optimistic update, then persist to the shared store.
+    setCandidates((prev) =>
+      prev.map((candidate) => ({
+        ...candidate,
+        applications: candidate.applications.map((application) =>
+          application.candidateName === candidateName && application.jobId === jobId
+            ? { ...application, selectedForRecord: !current }
+            : application
+        )
+      }))
     );
 
-    setApplications(next);
-    saveJson(applicationKey, next);
-  }
-
-  function resetDemo() {
-    setApplications([]);
-    setViewedJobIds([]);
-    setProfile(null);
-    saveJson(applicationKey, []);
-    saveJson(viewsKey, []);
-    saveJson(profileKey, null);
+    try {
+      await fetch("/api/applications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ candidateName, jobId, selected: !current })
+      });
+    } catch {
+      /* ignore; a later refresh will reconcile */
+    }
+    refresh();
   }
 
   return (
@@ -83,8 +108,8 @@ export function AdminClient() {
           <Link className="btn" href="/">
             <ArrowLeft size={16} /> Candidate Portal
           </Link>
-          <button className="btn" onClick={resetDemo} type="button">
-            <RefreshCcw size={16} /> Reset
+          <button className="btn" onClick={refresh} type="button">
+            <RefreshCcw size={16} /> Refresh
           </button>
         </div>
       </header>
@@ -92,25 +117,29 @@ export function AdminClient() {
       <section className="admin-grid">
         <div className="admin-panel">
           <p className="eyebrow" style={{ color: "#607066" }}>
-            Fit decision
+            Candidate pipeline
           </p>
-          <h1>{candidateName}</h1>
-          <p className="muted">{profile?.description ?? "No short description saved yet."}</p>
-          {profile ? <p className="muted">Profile saved: {new Date(profile.savedAt).toLocaleString()}</p> : null}
-          <div className="score">{score}/100</div>
-          <p className="muted">{getFitLabel(score)} based on applications, answer depth, client views, and record selections.</p>
+          <h1>
+            <Users size={22} style={{ verticalAlign: "-3px", marginRight: 8 }} />
+            {candidates.length} candidate{candidates.length === 1 ? "" : "s"}
+          </h1>
+          <p className="muted">
+            {loaded
+              ? `${totalApplications} application${totalApplications === 1 ? "" : "s"} received across all candidates.`
+              : "Loading candidate data..."}
+          </p>
           <div className="mini-stats section">
             <div className="mini-stat">
-              <strong>{applications.length}</strong>
-              <span>Applied jobs</span>
+              <strong>{candidates.length}</strong>
+              <span>Candidates</span>
             </div>
             <div className="mini-stat">
-              <strong>{remainingConnects}</strong>
-              <span>Connects left</span>
+              <strong>{totalApplications}</strong>
+              <span>Applications</span>
             </div>
             <div className="mini-stat">
-              <strong>{selectedCount}</strong>
-              <span>Record picks</span>
+              <strong>{jobs.length}</strong>
+              <span>Open jobs</span>
             </div>
           </div>
         </div>
@@ -118,77 +147,147 @@ export function AdminClient() {
         <div className="admin-panel">
           <h2>How Admin Should Read This</h2>
           <ul className="clean-list">
+            <li>Every candidate who applies appears here automatically — pick one to review their proposals.</li>
             <li>Excellent candidates apply to all seven jobs and write answers specific to each post guide.</li>
-            <li>Client viewed jobs show which posts were opened from the client route.</li>
             <li>Record selection marks the applications worth saving for final review.</li>
             <li>High-connect jobs reveal whether the candidate can prioritize important opportunities.</li>
           </ul>
         </div>
       </section>
 
-      <section className="admin-panel section">
-        <h2>Job Review Board</h2>
-        <div className="bid-list">
-          {jobs.map((job) => {
-            const application = appliedById.get(job.id);
-            const viewed = viewedJobIds.includes(job.id);
-
-            return (
-              <div className="record-row" key={job.id}>
-                <div className="record-top">
-                  <div>
-                    <strong>{job.title}</strong>
-                    <div className="job-meta">
-                      <span>{job.category}</span>
-                      <span>{job.connectsRequired} connects</span>
-                      <span>{job.bids.length} bids</span>
+      <section className="admin-grid section">
+        <div className="admin-panel">
+          <h2>Candidates</h2>
+          {candidates.length === 0 ? (
+            <p className="muted">
+              {loaded ? "No candidate has applied yet." : "Loading..."}
+            </p>
+          ) : (
+            <div className="bid-list">
+              {candidates.map((candidate) => {
+                const remaining = calculateRemainingConnects(candidate.applications, startingConnects);
+                const score = calculateFitScore(candidate.applications, []);
+                const isActive = candidate.candidateId === selectedId;
+                return (
+                  <button
+                    className={`record-row candidate-row${isActive ? " active" : ""}`}
+                    key={candidate.candidateId}
+                    onClick={() => setSelectedId(candidate.candidateId)}
+                    style={{ textAlign: "left", cursor: "pointer", width: "100%" }}
+                    type="button"
+                  >
+                    <div className="record-top">
+                      <div>
+                        <strong>{candidate.candidateName}</strong>
+                        <div className="job-meta">
+                          <span>{candidate.candidateDescription || "No title saved"}</span>
+                        </div>
+                      </div>
+                      <span className="pill good">{candidate.applications.length}/{jobs.length} applied</span>
                     </div>
-                  </div>
-                  <div className="card-actions">
-                    {viewed ? (
-                      <span className="pill good">
-                        <Eye size={15} /> Client viewed
-                      </span>
-                    ) : (
-                      <span className="pill">Not viewed</span>
-                    )}
-                    {application ? (
-                      <button className="btn" onClick={() => toggleRecord(job.id)} type="button">
-                        <ClipboardCheck size={16} />
-                        {application.selectedForRecord ? "Remove record" : "Select record"}
-                      </button>
-                    ) : null}
-                  </div>
+                    <div className="job-meta">
+                      <span>Fit {score}/100 · {getFitLabel(score)}</span>
+                      <span>{remaining} connects left</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <div className="admin-panel">
+          <h2>{selected ? selected.candidateName : "Select a candidate"}</h2>
+          {selected ? (
+            <>
+              <p className="muted">{selected.candidateDescription || "No short description saved."}</p>
+              <div className="score">{calculateFitScore(selected.applications, [])}/100</div>
+              <p className="muted">
+                {getFitLabel(calculateFitScore(selected.applications, []))} · last activity{" "}
+                {new Date(selected.updatedAt).toLocaleString()}
+              </p>
+              <div className="mini-stats section">
+                <div className="mini-stat">
+                  <strong>{selected.applications.length}</strong>
+                  <span>Applied jobs</span>
                 </div>
-                {application ? (
-                  <>
-                    <p><strong>Bid:</strong> ${application.bidAmount}</p>
-                    <p><strong>Boost Connects:</strong> {application.boostConnects}</p>
-                    <p><strong>Milestone:</strong> {application.milestone}</p>
+                <div className="mini-stat">
+                  <strong>{calculateRemainingConnects(selected.applications, startingConnects)}</strong>
+                  <span>Connects left</span>
+                </div>
+                <div className="mini-stat">
+                  <strong>{selected.applications.filter((item) => item.selectedForRecord).length}</strong>
+                  <span>Record picks</span>
+                </div>
+              </div>
+            </>
+          ) : (
+            <p className="muted">Candidate details appear here once someone applies.</p>
+          )}
+        </div>
+      </section>
+
+      {selected ? (
+        <section className="admin-panel section">
+          <h2>
+            Jobs {selected.candidateName} applied to ({selected.applications.length})
+          </h2>
+          <div className="bid-list">
+            {selected.applications.length === 0 ? (
+              <p className="muted">This candidate has not applied to any job yet.</p>
+            ) : (
+              selected.applications.map((application) => {
+                const job = jobs.find((item) => item.id === application.jobId);
+                const title = job?.title ?? application.jobId;
+
+                return (
+                  <div className="record-row" key={application.jobId}>
+                    <div className="record-top">
+                      <div>
+                        <strong>{title}</strong>
+                        <div className="job-meta">
+                          {job ? <span>{job.category}</span> : null}
+                          <span>{job?.connectsRequired ?? 0} connects used</span>
+                          <span>Bid: ${application.bidAmount}</span>
+                        </div>
+                      </div>
+                      <div className="card-actions">
+                        <button
+                          className="btn"
+                          onClick={() =>
+                            toggleRecord(application.candidateName, application.jobId, application.selectedForRecord)
+                          }
+                          type="button"
+                        >
+                          <ClipboardCheck size={16} />
+                          {application.selectedForRecord ? "Remove record" : "Select record"}
+                        </button>
+                      </div>
+                    </div>
+                    <p><strong>Bid amount:</strong> ${application.bidAmount}</p>
+                    <p><strong>Connects used:</strong> {job?.connectsRequired ?? 0}</p>
+                    <p><strong>Payment:</strong> {application.milestone}</p>
+                    {application.milestoneTitle ? (
+                      <p><strong>Milestone title:</strong> {application.milestoneTitle}</p>
+                    ) : null}
+                    {application.milestoneDescription ? (
+                      <p><strong>Milestone details:</strong> {application.milestoneDescription}</p>
+                    ) : null}
                     <p><strong>Cover letter:</strong> {application.coverLetter || "No cover letter entered."}</p>
-                    <p className="muted">{application.answer}</p>
+                    <p><strong>Expert answer:</strong> {application.answer || "No answer entered."}</p>
+                    <p className="muted">Applied {new Date(application.appliedAt).toLocaleString()}</p>
                     {application.selectedForRecord ? (
                       <span className="pill good">
                         <CheckCircle2 size={15} /> Saved for final selection
                       </span>
                     ) : null}
-                  </>
-                ) : (
-                  <p className="muted">Candidate has not applied to this job yet.</p>
-                )}
-                <div>
-                  <strong>Post guide:</strong>
-                  <ul className="clean-list">
-                    {job.postGuide.map((guide) => (
-                      <li key={guide}>{guide}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </section>
+      ) : null}
     </main>
   );
 }
