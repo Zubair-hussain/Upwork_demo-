@@ -7,8 +7,9 @@ describe("job seed data", () => {
     expect(jobs.every((job) => job.bids.length === 7)).toBe(true);
   });
 
-  it("allows the candidate to apply to every job with the starting connects", () => {
-    expect(totalConnectsRequired).toBe(startingConnects);
+  it("forces prioritization: the seven jobs cost more than the starting connects", () => {
+    expect(startingConnects).toBe(50);
+    expect(totalConnectsRequired).toBeGreaterThan(startingConnects);
     expect(jobs.some((job) => job.connectsRequired === 30)).toBe(true);
   });
 
