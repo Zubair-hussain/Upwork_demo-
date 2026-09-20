@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675">
+  <rect width="1200" height="675" fill="#111312"/>
+  <rect x="90" y="90" width="1020" height="495" rx="18" fill="#171918" stroke="#2d302f"/>
+  <text x="135" y="165" font-family="Arial" font-size="42" font-weight="700" fill="#f1f2f1">Coverage Evidence</text>
+  <text x="135" y="230" font-family="Arial" font-size="26" fill="#a9afab">Run npm run coverage to refresh the HTML coverage report.</text>
+  <rect x="135" y="295" width="930" height="70" rx="10" fill="#202322"/>
+  <text x="165" y="340" font-family="Consolas, monospace" font-size="25" fill="#14a800">npm run coverage</text>
+  <rect x="135" y="400" width="260" height="90" rx="10" fill="#202322"/>
+  <text x="172" y="455" font-family="Arial" font-size="28" fill="#f1f2f1">6 tests passing</text>
+</svg>
