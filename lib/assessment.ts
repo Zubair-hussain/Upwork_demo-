@@ -6,6 +6,8 @@ export type Application = {
   bidAmount: number;
   boostConnects: number;
   milestone: string;
+  milestoneTitle?: string;
+  milestoneDescription?: string;
   coverLetter: string;
   answer: string;
   selectedForRecord: boolean;

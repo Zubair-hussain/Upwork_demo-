@@ -287,7 +287,7 @@ export const jobs: Job[] = [
 ];
 
 export const totalConnectsRequired = jobs.reduce((sum, job) => sum + job.connectsRequired, 0);
-export const startingConnects = 75;
+export const startingConnects = 50;
 
 export function getJobById(id: string) {
   return jobs.find((job) => job.id === id);
