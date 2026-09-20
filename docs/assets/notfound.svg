@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 260" width="900" height="260" font-family="Segoe UI, Inter, system-ui, sans-serif">
+  <style>
+    .badge { transform-origin: 150px 130px; animation: spin 6s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .code { animation: float 4s ease-in-out infinite; }
+    @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+    .fadein { opacity: 0; animation: fadein 900ms ease forwards; }
+    .d1 { animation-delay: 150ms; }
+    .d2 { animation-delay: 350ms; }
+    @keyframes fadein { to { opacity: 1; } }
+    .btn { animation: pulse 2.6s ease-in-out infinite; transform-origin: center; }
+    @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+  </style>
+
+  <rect x="0" y="0" width="900" height="260" rx="18" fill="#ffffff" stroke="#d9e1d9"/>
+
+  <!-- Spinning compass badge -->
+  <g class="badge">
+    <circle cx="150" cy="130" r="40" fill="#108a00"/>
+    <polygon points="150,108 162,138 150,130 138,138" fill="#ffffff"/>
+    <polygon points="150,152 138,122 150,130 162,122" fill="#c7f7c2"/>
+    <circle cx="150" cy="130" r="5" fill="#ffffff"/>
+  </g>
+
+  <!-- Floating 404 -->
+  <text class="code" x="260" y="120" font-size="72" font-weight="900" fill="#0d6f00" letter-spacing="4">404</text>
+
+  <text class="fadein d1" x="262" y="165" font-size="26" font-weight="800" fill="#15201a">This job posting could not be found</text>
+  <text class="fadein d2" x="262" y="196" font-size="17" fill="#607066">The page may have been closed, moved, or never existed.</text>
+
+  <!-- Pulsing CTA -->
+  <g class="btn">
+    <rect x="262" y="212" width="170" height="40" rx="8" fill="#108a00"/>
+    <text x="347" y="238" font-size="16" font-weight="800" fill="#ffffff" text-anchor="middle">Back to jobs</text>
+  </g>
+</svg>
