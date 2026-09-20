@@ -251,6 +251,40 @@ export function PlatformClient() {
         </div>
       ) : null}
 
+      <section className="uw-onboard" aria-label="Getting started">
+        <article className="uw-onboard-card">
+          <div className="uw-onboard-head">
+            <span className="uw-onboard-icon"><UserRound size={22} /></span>
+            <div>
+              <h2>New here? Start in 3 steps</h2>
+              <p>A quick guide to using this platform.</p>
+            </div>
+          </div>
+          <ol className="uw-onboard-steps">
+            <li><strong>Save your profile.</strong> Add your name and a short title above, then press <em>Save profile</em>. You must do this before applying.</li>
+            <li><strong>Choose jobs that fit.</strong> You have {startingConnects} Connects. Each job costs 5 to 30 Connects, so pick the opportunities that matter most.</li>
+            <li><strong>Open a job and apply.</strong> Click <em>View job</em>, complete the proposal, and submit. Your applications appear in your progress panel.</li>
+          </ol>
+        </article>
+
+        <article className="uw-onboard-card">
+          <div className="uw-onboard-head">
+            <span className="uw-onboard-icon"><BriefcaseBusiness size={22} /></span>
+            <div>
+              <h2>How to apply for a job</h2>
+              <p>What each proposal needs.</p>
+            </div>
+          </div>
+          <ul className="uw-onboard-list">
+            <li><CheckCircle2 size={16} /> Enter your <strong>bid amount</strong> for the job.</li>
+            <li><CheckCircle2 size={16} /> Pick how you want to be paid. <strong>By milestone</strong> also needs a milestone title and description.</li>
+            <li><CheckCircle2 size={16} /> Write your <strong>cover letter</strong> and your <strong>expert answer</strong> to the screening questions.</li>
+            <li><CheckCircle2 size={16} /> Press <strong>Apply now</strong>. The job&apos;s Connects are deducted from your balance.</li>
+          </ul>
+          <a className="uw-onboard-cta" href="#open-jobs">Browse open jobs <ArrowRight size={15} /></a>
+        </article>
+      </section>
+
       <section className="uw-jobs-board" id="open-jobs" aria-label="Open jobs">
         <div className="uw-job-feed">
           <header className="uw-feed-header">
