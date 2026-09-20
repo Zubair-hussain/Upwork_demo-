@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 300" width="900" height="300" font-family="Segoe UI, Inter, system-ui, sans-serif">
+  <style>
+    /* Each slide (group) is shown for 6s of an 18s loop. */
+    .slide { opacity: 0; }
+    .s1 { animation: show 18s linear infinite 0s; }
+    .s2 { animation: show 18s linear infinite -12s; }
+    .s3 { animation: show 18s linear infinite -6s; }
+    @keyframes show {
+      0%   { opacity: 0; transform: translateY(14px); }
+      3%   { opacity: 1; transform: translateY(0); }
+      30%  { opacity: 1; transform: translateY(0); }
+      36%  { opacity: 0; transform: translateY(-8px); }
+      100% { opacity: 0; }
+    }
+    .art { animation: float 4s ease-in-out infinite; transform-origin: center; }
+    @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+    /* Progress bars fill in sequence, one per slide. */
+    .fill { transform-origin: left center; }
+    .f1 { animation: fill 18s linear infinite 0s; }
+    .f2 { animation: fill 18s linear infinite -12s; }
+    .f3 { animation: fill 18s linear infinite -6s; }
+    @keyframes fill {
+      0%   { transform: scaleX(0); }
+      33%  { transform: scaleX(1); }
+      34%  { transform: scaleX(0); }
+      100% { transform: scaleX(0); }
+    }
+    .eyebrow { fill: #d7dbd8; font-size: 18px; font-weight: 700; }
+    .headline { fill: #ffffff; font-size: 34px; font-weight: 800; }
+    .cta-text { fill: #111312; font-size: 18px; font-weight: 800; }
+  </style>
+
+  <!-- Banner background -->
+  <defs>
+    <radialGradient id="glow" cx="88%" cy="20%" r="60%">
+      <stop offset="0%" stop-color="#14a800" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#14a800" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect x="0" y="0" width="900" height="300" rx="18" fill="#1d1f1e"/>
+  <rect x="0" y="0" width="900" height="300" rx="18" fill="url(#glow)"/>
+
+  <!-- Floating illustration -->
+  <text class="art" x="770" y="150" font-size="90" text-anchor="middle">
+    <tspan class="s1">🧗</tspan><tspan class="s2" x="770">📊</tspan><tspan class="s3" x="770">🌴</tspan>
+  </text>
+
+  <!-- Slide 1 -->
+  <g class="s1">
+    <text class="eyebrow" x="50" y="70">Freelancer Plus with new perks</text>
+    <text class="headline" x="50" y="130">100 monthly Connects and full</text>
+    <text class="headline" x="50" y="172">access to Uma, Upwork's Mindful AI.</text>
+  </g>
+  <!-- Slide 2 -->
+  <g class="s2">
+    <text class="eyebrow" x="50" y="70">Freelancer Plus with new perks</text>
+    <text class="headline" x="50" y="130">See competitor bids so you can</text>
+    <text class="headline" x="50" y="172">price every proposal with confidence.</text>
+  </g>
+  <!-- Slide 3 -->
+  <g class="s3">
+    <text class="eyebrow" x="50" y="70">Freelancer Plus with new perks</text>
+    <text class="headline" x="50" y="130">Keep your profile visible and claim</text>
+    <text class="headline" x="50" y="172">a custom URL, even on a break.</text>
+  </g>
+
+  <!-- Learn more pill -->
+  <rect x="50" y="205" width="150" height="46" rx="23" fill="#ffffff"/>
+  <text class="cta-text" x="125" y="234" text-anchor="middle">Learn more</text>
+
+  <!-- Progress bars -->
+  <g>
+    <rect x="250" y="226" width="120" height="4" rx="2" fill="#ffffff" opacity="0.25"/>
+    <rect class="fill f1" x="250" y="226" width="120" height="4" rx="2" fill="#ffffff"/>
+    <rect x="380" y="226" width="120" height="4" rx="2" fill="#ffffff" opacity="0.25"/>
+    <rect class="fill f2" x="380" y="226" width="120" height="4" rx="2" fill="#ffffff"/>
+    <rect x="510" y="226" width="120" height="4" rx="2" fill="#ffffff" opacity="0.25"/>
+    <rect class="fill f3" x="510" y="226" width="120" height="4" rx="2" fill="#ffffff"/>
+  </g>
+</svg>
