@@ -254,5 +254,19 @@ SVG assets in `public/assets/` so screenshots render without external downloads:
 - `public/assets/money-protection.svg`
 - `public/assets/profile-portfolio.svg`
 - `public/assets/profile-certificate.svg`
-#   U p w o r k _ d e m o -  
- 
+
+---
+
+## Homepage Screenshots
+
+### Desktop
+
+<p align="center">
+  <img src="record/images/homepage-upwork-desktop.png" alt="Upwork-inspired homepage desktop view" width="100%" />
+</p>
+
+### Responsive
+
+<p align="center">
+  <img src="record/images/homepage-upwork-mobile.png" alt="Upwork-inspired homepage responsive view" width="500" />
+</p>
