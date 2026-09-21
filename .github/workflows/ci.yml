@@ -2,9 +2,10 @@ name: CI
 
 on:
   push:
-    branches: ["main", "master", "develop"]
+    branches: ["_prod", "main", "master", "develop"]
   pull_request:
-    branches: ["main", "master", "develop"]
+    branches: ["_prod", "main", "master", "develop"]
+  workflow_dispatch:
 
 jobs:
   test-build-audit:

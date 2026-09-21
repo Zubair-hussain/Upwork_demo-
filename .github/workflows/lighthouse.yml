@@ -1,8 +1,10 @@
 name: Lighthouse
 
 on:
+  push:
+    branches: ["_prod", "main", "master", "develop"]
   pull_request:
-    branches: ["main", "master", "develop"]
+    branches: ["_prod", "main", "master", "develop"]
   workflow_dispatch:
 
 jobs:
@@ -27,7 +29,7 @@ jobs:
         run: npm run build
 
       - name: Run Lighthouse CI
-        run: npx @lhci/cli@0.14.x autorun
+        run: npx --yes @lhci/cli@0.14.0 autorun
         env:
           LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
 
@@ -37,3 +39,5 @@ jobs:
         with:
           name: lighthouse-report
           path: .lighthouseci
+          include-hidden-files: true
+          if-no-files-found: error
