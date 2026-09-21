@@ -9,6 +9,7 @@ import type { Application } from "./assessment";
 // (40+ at once) do not clobber each other's writes.
 
 export type Submission = Application & {
+  candidateEmail: string;
   candidateDescription: string;
   updatedAt: string;
 };
@@ -49,6 +50,7 @@ function candidateId(name: string): string {
 }
 
 export async function upsertSubmission(
+  candidateEmail: string,
   candidateDescription: string,
   application: Application
 ): Promise<void> {
@@ -61,6 +63,7 @@ export async function upsertSubmission(
 
     const submission: Submission = {
       ...application,
+      candidateEmail,
       candidateDescription,
       updatedAt: new Date().toISOString()
     };
@@ -98,6 +101,7 @@ export async function setRecordSelection(
 export type CandidateRecord = {
   candidateId: string;
   candidateName: string;
+  candidateEmail: string;
   candidateDescription: string;
   updatedAt: string;
   applications: Submission[];
@@ -114,6 +118,7 @@ export async function getAllCandidates(): Promise<CandidateRecord[]> {
       existing.applications.push(submission);
       if (submission.updatedAt > existing.updatedAt) {
         existing.updatedAt = submission.updatedAt;
+        existing.candidateEmail = submission.candidateEmail ?? "";
         existing.candidateDescription = submission.candidateDescription;
         existing.candidateName = submission.candidateName;
       }
@@ -121,6 +126,7 @@ export async function getAllCandidates(): Promise<CandidateRecord[]> {
       byCandidate.set(id, {
         candidateId: id,
         candidateName: submission.candidateName,
+        candidateEmail: submission.candidateEmail ?? "",
         candidateDescription: submission.candidateDescription,
         updatedAt: submission.updatedAt,
         applications: [submission]

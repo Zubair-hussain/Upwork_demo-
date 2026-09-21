@@ -2489,116 +2489,356 @@ button {
   }
 }
 
-/* Candidate onboarding cards (how to use + how to apply) */
-.uw-onboard {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 20px;
-  margin: 8px 0 28px;
-}
-
-.uw-onboard-card {
-  padding: 24px;
-  border: 1px solid #e4e4e4;
-  border-radius: 16px;
-  background: #fff;
-}
-
-.uw-onboard-head {
-  display: flex;
-  gap: 14px;
-  align-items: flex-start;
-  margin-bottom: 16px;
-}
-
-.uw-onboard-icon {
+/* First-visit instructions, presented separately from the marketplace page. */
+.uw-welcome-overlay {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
   display: grid;
   place-items: center;
-  flex: 0 0 auto;
-  width: 44px;
-  height: 44px;
-  border-radius: 999px;
-  color: #108a00;
-  background: #e7f6e4;
+  overflow-y: auto;
+  padding: 38px 20px;
+  background: rgba(245, 247, 244, 0.96);
+  backdrop-filter: blur(12px);
 }
 
-.uw-onboard-head h2 {
-  margin: 0;
-  font-size: 1.2rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
+.uw-welcome-dialog {
+  position: relative;
+  width: min(620px, 100%);
+  padding-top: 26px;
+}
+
+.uw-welcome-stack span {
+  position: absolute;
+  right: 5%;
+  left: 5%;
+  height: 100%;
+  border: 1px solid #dfe5dd;
+  border-radius: 30px;
+  background: #fbfcfb;
+  box-shadow: 0 12px 35px rgba(19, 55, 20, 0.05);
+}
+
+.uw-welcome-stack span:first-child { top: 0; }
+.uw-welcome-stack span:last-child { top: 13px; right: 2.5%; left: 2.5%; }
+
+.uw-welcome-card {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 560px;
+  overflow: hidden;
+  border: 1px solid #dce3da;
+  border-radius: 30px;
+  padding: 34px 40px 30px;
   color: #181818;
+  background: radial-gradient(circle at 100% 0, rgba(20, 168, 0, 0.13), transparent 36%), #ffffff;
+  box-shadow: 0 28px 80px rgba(23, 50, 24, 0.14);
 }
 
-.uw-onboard-head p {
-  margin: 2px 0 0;
-  color: #5c665c;
-  font-size: 0.92rem;
+.uw-welcome-card-header,
+.uw-welcome-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-.uw-onboard-steps,
-.uw-onboard-list {
+.uw-welcome-card-header button {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 50%;
+  color: #536052;
+  background: #f0f3ef;
+}
+
+.uw-welcome-card-icon {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  border-radius: 15px;
+  color: #fff;
+  background: linear-gradient(145deg, #14a800, #087a28);
+  box-shadow: 0 9px 22px rgba(20, 168, 0, 0.23);
+}
+
+.uw-welcome-card-content { padding: 42px 0 26px; }
+
+.uw-welcome-kicker {
+  display: inline-block;
+  margin-bottom: 10px;
+  color: #108a00;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.uw-welcome-card-content h2 {
+  margin: 0;
+  max-width: 440px;
+  font-size: clamp(2rem, 6vw, 3rem);
+  line-height: 1.05;
+  letter-spacing: -0.045em;
+}
+
+.uw-welcome-card-content > p {
+  margin: 14px 0 30px;
+  color: #687067;
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+
+.uw-welcome-checklist {
+  display: grid;
+  gap: 13px;
   margin: 0;
   padding: 0;
-  display: grid;
-  gap: 12px;
-  color: #2f352f;
-  font-size: 0.95rem;
-  line-height: 1.5;
-}
-
-.uw-onboard-steps {
-  padding-left: 20px;
-}
-
-.uw-onboard-steps li {
-  padding-left: 4px;
-}
-
-.uw-onboard-list {
   list-style: none;
 }
 
-.uw-onboard-list li {
+.uw-welcome-checklist li {
   display: grid;
-  grid-template-columns: 18px 1fr;
-  gap: 10px;
+  grid-template-columns: 38px 1fr;
+  gap: 13px;
   align-items: start;
+  border: 1px solid #e4e9e2;
+  border-radius: 16px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.82);
 }
 
-.uw-onboard-list li svg {
-  margin-top: 3px;
+.uw-welcome-checklist li > span,
+.uw-welcome-checklist li > svg {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 9px;
   color: #108a00;
+  background: #eaf7e8;
+  font-weight: 700;
 }
 
-.uw-onboard-steps strong,
-.uw-onboard-list strong {
-  color: #181818;
+.uw-welcome-checklist li > svg { padding: 6px; }
+.uw-welcome-checklist strong { display: block; font-size: 0.96rem; }
+.uw-welcome-checklist p { margin: 3px 0 0; color: #697168; font-size: 0.85rem; line-height: 1.4; }
+.uw-welcome-actions { margin-top: auto; padding-top: 8px; }
+.uw-welcome-dots { display: flex; gap: 7px; }
+
+.uw-welcome-dots span {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #ced5cc;
+  transition: width 180ms ease, background 180ms ease;
 }
 
-.uw-onboard-steps em,
-.uw-onboard-list em {
-  font-style: normal;
-  font-weight: 600;
-  color: #108a00;
-}
+.uw-welcome-dots span.active { width: 25px; background: #14a800; }
 
-.uw-onboard-cta {
+.uw-welcome-next {
   display: inline-flex;
-  gap: 6px;
+  min-height: 48px;
   align-items: center;
-  margin-top: 18px;
-  font-weight: 600;
-  color: #108a00;
-  text-decoration: none;
+  gap: 8px;
+  border-radius: 999px;
+  padding: 0 22px;
+  color: #fff;
+  background: #108a00;
+  font-weight: 650;
 }
 
-.uw-onboard-cta:hover {
-  text-decoration: underline;
+.uw-welcome-next:hover { background: #087a28; }
+
+@media (max-width: 620px) {
+  .uw-welcome-overlay { padding: 24px 12px; }
+  .uw-welcome-card { min-height: 0; border-radius: 24px; padding: 25px 22px 23px; }
+  .uw-welcome-card-content { padding-top: 28px; }
+  .uw-welcome-card-content > p { margin-bottom: 21px; }
 }
 
-@media (max-width: 860px) {
-  .uw-onboard {
-    grid-template-columns: 1fr;
+/* Job discovery and proposal activity enhancements. */
+.uw-clickable-job { position: relative; cursor: pointer; }
+
+.uw-card-link {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+}
+
+.uw-card-link:focus-visible { outline: 3px solid #14a800; outline-offset: -3px; }
+
+.uw-clickable-job .uw-job-icon-actions,
+.uw-clickable-job .uw-open-job {
+  position: relative;
+  z-index: 2;
+}
+
+.uw-job-bid-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+
+.uw-job-bid-summary span:not(:first-child) { color: #3f6f3b; }
+
+.uw-proposal-activity { padding: 30px 36px; }
+
+.uw-activity-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.uw-activity-heading h2 { margin: 0 0 7px; }
+.uw-activity-heading p { margin: 0; }
+.uw-rank-table-wrap { overflow-x: auto; }
+
+.uw-proposal-activity .uw-rank-table {
+  width: 100%;
+  min-width: 620px;
+}
+
+.uw-proposal-activity .uw-rank-table th:nth-child(2),
+.uw-proposal-activity .uw-rank-table th:nth-child(3) { display: table-cell; }
+.uw-proposal-activity .uw-rank-table td:first-child {
+  display: table-cell;
+  min-width: 64px;
+}
+
+.uw-proposal-activity .uw-rank-table td:nth-child(2) {
+  display: flex;
+  min-width: 190px;
+  align-items: center;
+  gap: 10px;
+}
+
+.uw-proposal-activity .uw-rank-table td > span:last-child {
+  display: grid;
+  gap: 4px;
+}
+
+.uw-proposal-activity .uw-rank-table small {
+  max-width: 360px;
+  color: var(--uw-muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.uw-bid-avatar {
+  display: grid;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 50%;
+  color: #111312;
+  background: var(--uw-green);
+  font-weight: 900;
+}
+
+.uw-current-bid {
+  color: #ffffff;
+  background: rgba(20, 168, 0, 0.13);
+}
+
+.uw-current-bid td {
+  color: #ffffff;
+}
+
+.uw-test-notice-card {
+  min-height: 430px;
+}
+
+.uw-test-notice-label {
+  color: #687067;
+  font-size: 0.9rem;
+}
+
+.mobile-desktop-warning { display: none; }
+
+@media (max-width: 700px) {
+  .mobile-desktop-warning {
+    position: sticky;
+    z-index: 1200;
+    top: 0;
+    display: grid;
+    gap: 2px;
+    padding: 11px 16px;
+    border-bottom: 1px solid #d78d00;
+    color: #4a3100;
+    background: #fff2c7;
+    text-align: center;
+    box-shadow: 0 5px 18px rgba(48, 35, 4, 0.14);
+  }
+
+  .mobile-desktop-warning strong { font-size: 0.88rem; }
+  .mobile-desktop-warning span { font-size: 0.76rem; line-height: 1.35; }
+  .uw-activity-heading { align-items: stretch; flex-direction: column; }
+  .uw-proposal-activity { padding: 24px 20px; }
+}
+
+.uw-milestone-builder {
+  display: grid;
+  gap: 16px;
+  margin: 8px 0 20px;
+}
+
+.uw-milestone-heading,
+.uw-milestone-number {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.uw-milestone-heading p {
+  margin: 5px 0 0;
+}
+
+.uw-milestone-item {
+  display: grid;
+  gap: 15px;
+  border: 1px solid var(--uw-line);
+  border-radius: 14px;
+  padding: 18px;
+  background: #1c1f1d;
+}
+
+.uw-milestone-number > strong {
+  color: var(--uw-green);
+}
+
+.uw-milestone-number button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #ffaaa3;
+  background: transparent;
+  font-size: 0.82rem;
+}
+
+.uw-milestone-item textarea {
+  min-height: 110px !important;
+}
+
+.admin-milestones ol {
+  display: grid;
+  gap: 10px;
+  margin: 10px 0 16px;
+}
+
+.admin-milestones li p {
+  margin: 4px 0 0;
+}
+
+@media (max-width: 620px) {
+  .uw-milestone-heading {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }

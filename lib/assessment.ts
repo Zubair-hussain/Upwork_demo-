@@ -8,6 +8,7 @@ export type Application = {
   milestone: string;
   milestoneTitle?: string;
   milestoneDescription?: string;
+  milestones?: Array<{ title: string; description: string }>;
   coverLetter: string;
   answer: string;
   selectedForRecord: boolean;

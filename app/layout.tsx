@@ -18,7 +18,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <div className="mobile-desktop-warning" role="status">
+          <strong>Desktop experience recommended</strong>
+          <span>Please open this website on a computer or laptop for the best experience.</span>
+        </div>
+        {children}
+      </body>
     </html>
   );
 }

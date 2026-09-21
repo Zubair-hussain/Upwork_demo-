@@ -6,11 +6,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Application, calculateFitScore, calculateRemainingConnects, getFitLabel } from "@/lib/assessment";
 import { jobs, startingConnects } from "@/lib/jobs";
 
-type Submission = Application & { candidateDescription: string; updatedAt: string };
+type Submission = Application & { candidateEmail: string; candidateDescription: string; updatedAt: string };
 
 type CandidateRecord = {
   candidateId: string;
   candidateName: string;
+  candidateEmail: string;
   candidateDescription: string;
   updatedAt: string;
   applications: Submission[];
@@ -180,6 +181,7 @@ export function AdminClient() {
                       <div>
                         <strong>{candidate.candidateName}</strong>
                         <div className="job-meta">
+                          <span>{candidate.candidateEmail || "No email saved"}</span>
                           <span>{candidate.candidateDescription || "No title saved"}</span>
                         </div>
                       </div>
@@ -200,6 +202,11 @@ export function AdminClient() {
           <h2>{selected ? selected.candidateName : "Select a candidate"}</h2>
           {selected ? (
             <>
+              {selected.candidateEmail ? (
+                <p><strong>Email:</strong> <a href={`mailto:${selected.candidateEmail}`}>{selected.candidateEmail}</a></p>
+              ) : (
+                <p className="muted">No email address saved.</p>
+              )}
               <p className="muted">{selected.candidateDescription || "No short description saved."}</p>
               <div className="score">{calculateFitScore(selected.applications, [])}/100</div>
               <p className="muted">
@@ -265,13 +272,22 @@ export function AdminClient() {
                       </div>
                     </div>
                     <p><strong>Bid amount:</strong> ${application.bidAmount}</p>
-                    <p><strong>Connects used:</strong> {job?.connectsRequired ?? 0}</p>
+                    <p><strong>Connects used:</strong> {(job?.connectsRequired ?? 0) + application.boostConnects}</p>
                     <p><strong>Payment:</strong> {application.milestone}</p>
-                    {application.milestoneTitle ? (
-                      <p><strong>Milestone title:</strong> {application.milestoneTitle}</p>
-                    ) : null}
-                    {application.milestoneDescription ? (
-                      <p><strong>Milestone details:</strong> {application.milestoneDescription}</p>
+                    {application.milestones?.length ? (
+                      <div className="admin-milestones">
+                        <strong>Milestones:</strong>
+                        <ol>
+                          {application.milestones.map((item, index) => (
+                            <li key={`${application.jobId}-milestone-${index}`}>
+                              <strong>{item.title}</strong>
+                              <p>{item.description}</p>
+                            </li>
+                          ))}
+                        </ol>
+                      </div>
+                    ) : application.milestoneTitle ? (
+                      <p><strong>Milestone:</strong> {application.milestoneTitle} — {application.milestoneDescription}</p>
                     ) : null}
                     <p><strong>Cover letter:</strong> {application.coverLetter || "No cover letter entered."}</p>
                     <p><strong>Expert answer:</strong> {application.answer || "No answer entered."}</p>

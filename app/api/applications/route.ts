@@ -9,7 +9,10 @@ export const runtime = "nodejs";
 // Never cache: the admin must always see the latest candidate data.
 export const dynamic = "force-dynamic";
 
-type IncomingApplication = Partial<Application> & { candidateDescription?: string };
+type IncomingApplication = Partial<Application> & {
+  candidateEmail?: string;
+  candidateDescription?: string;
+};
 
 function isValid(body: IncomingApplication): body is IncomingApplication &
   Pick<Application, "jobId" | "candidateName" | "bidAmount" | "boostConnects"> {
@@ -18,6 +21,8 @@ function isValid(body: IncomingApplication): body is IncomingApplication &
     body.jobId.length > 0 &&
     typeof body.candidateName === "string" &&
     body.candidateName.trim().length > 0 &&
+    typeof body.candidateEmail === "string" &&
+    /^\S+@\S+\.\S+$/.test(body.candidateEmail.trim()) &&
     typeof body.bidAmount === "number" &&
     Number.isFinite(body.bidAmount) &&
     typeof body.boostConnects === "number" &&
@@ -45,13 +50,18 @@ export async function POST(request: Request) {
     milestone: body.milestone ?? "",
     milestoneTitle: body.milestoneTitle ?? "",
     milestoneDescription: body.milestoneDescription ?? "",
+    milestones: Array.isArray(body.milestones) ? body.milestones : [],
     coverLetter: body.coverLetter ?? "",
     answer: body.answer ?? "",
     selectedForRecord: false,
     appliedAt: body.appliedAt ?? new Date().toISOString()
   };
 
-  await upsertSubmission((body.candidateDescription ?? "").trim(), application);
+  await upsertSubmission(
+    (body.candidateEmail ?? "").trim().toLowerCase(),
+    (body.candidateDescription ?? "").trim(),
+    application
+  );
 
   return NextResponse.json({ ok: true });
 }

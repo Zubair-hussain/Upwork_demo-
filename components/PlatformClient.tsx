@@ -28,9 +28,11 @@ import { Job, jobs, startingConnects } from "@/lib/jobs";
 const applicationKey = "uet-applications";
 const viewsKey = "uet-client-views";
 const profileKey = "uet-candidate-profile";
+const onboardingKey = "uet-onboarding-seen";
 
 type CandidateProfile = {
   name: string;
+  email: string;
   description: string;
   savedAt: string;
 };
@@ -56,6 +58,7 @@ function saveJson<T>(key: string, value: T) {
 
 export function PlatformClient() {
   const [candidateName, setCandidateName] = useState("");
+  const [candidateEmail, setCandidateEmail] = useState("");
   const [headline, setHeadline] = useState("");
   const [popup, setPopup] = useState("");
   const [activeCategory, setActiveCategory] = useState<Job["category"] | "All">("All");
@@ -63,6 +66,8 @@ export function PlatformClient() {
   const [viewedJobIds, setViewedJobIds] = useState<string[]>([]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const [onboardingCard, setOnboardingCard] = useState(0);
 
   useEffect(() => {
     function refresh() {
@@ -74,6 +79,7 @@ export function PlatformClient() {
     const profile = readJson<CandidateProfile | null>(profileKey, null);
     if (profile) {
       setCandidateName(profile.name);
+      setCandidateEmail(profile.email ?? "");
       setHeadline(profile.description);
     }
 
@@ -86,6 +92,22 @@ export function PlatformClient() {
       window.removeEventListener("focus", refresh);
     };
   }, []);
+
+  useEffect(() => {
+    if (window.localStorage.getItem(onboardingKey) !== "true") {
+      setOnboardingOpen(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!onboardingOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [onboardingOpen]);
 
   const remainingConnects = calculateRemainingConnects(applications, startingConnects);
   const score = calculateFitScore(applications, viewedJobIds);
@@ -100,21 +122,91 @@ export function PlatformClient() {
   const appliedIds = useMemo(() => new Set(applications.map((application) => application.jobId)), [applications]);
 
   function saveProfile() {
-    if (!candidateName.trim() || !headline.trim()) {
-      setPopup("Please add your name and short description before saving.");
+    if (!candidateName.trim() || !candidateEmail.trim() || !headline.trim()) {
+      setPopup("Please add your name, email, and short description before saving.");
+      return;
+    }
+
+    if (!/^\S+@\S+\.\S+$/.test(candidateEmail.trim())) {
+      setPopup("Please enter a valid email address.");
       return;
     }
 
     saveJson<CandidateProfile>(profileKey, {
       name: candidateName.trim(),
+      email: candidateEmail.trim().toLowerCase(),
       description: headline.trim(),
       savedAt: new Date().toISOString()
     });
-    setPopup("Profile saved. Admin can now see your name and short description.");
+    setPopup("Profile saved. Admin can now see your name, email, and short description.");
+  }
+
+  function closeOnboarding() {
+    window.localStorage.setItem(onboardingKey, "true");
+    setOnboardingOpen(false);
   }
 
   return (
     <main className="uw-home">
+      {onboardingOpen ? (
+        <div className="uw-welcome-overlay" role="presentation">
+          <section
+            aria-describedby="welcome-card-description"
+            aria-labelledby="welcome-card-title"
+            aria-modal="true"
+            className="uw-welcome-dialog"
+            role="dialog"
+          >
+            <div className="uw-welcome-stack" aria-hidden="true"><span /><span /></div>
+            <article className="uw-welcome-card">
+              <header className="uw-welcome-card-header">
+                <span className="uw-welcome-card-icon">
+                  {onboardingCard === 0 ? <UserRound size={25} /> : <BriefcaseBusiness size={25} />}
+                </span>
+                <button aria-label="Skip instructions" onClick={closeOnboarding} type="button"><X size={20} /></button>
+              </header>
+
+              {onboardingCard === 0 ? (
+                <div className="uw-welcome-card-content">
+                  <span className="uw-welcome-kicker">Getting started</span>
+                  <h2 id="welcome-card-title">Set up your candidate profile</h2>
+                  <p id="welcome-card-description">Add your personal information before exploring jobs.</p>
+                  <ol className="uw-welcome-checklist">
+                    <li><span>1</span><div><strong>Add your details</strong><p>Enter your name, email address, and professional title.</p></div></li>
+                    <li><span>2</span><div><strong>Save your profile</strong><p>Your details will be included with each application.</p></div></li>
+                    <li><span>3</span><div><strong>Choose the right jobs</strong><p>Use your {startingConnects} Connects on the opportunities that fit you best.</p></div></li>
+                  </ol>
+                </div>
+              ) : (
+                <div className="uw-welcome-card-content">
+                  <span className="uw-welcome-kicker">Applying for work</span>
+                  <h2 id="welcome-card-title">Send a strong proposal</h2>
+                  <p id="welcome-card-description">Each application needs a few important details.</p>
+                  <ul className="uw-welcome-checklist">
+                    <li><CheckCircle2 size={20} /><div><strong>Set your bid and payment plan</strong><p>Add milestone details when you choose milestone payments.</p></div></li>
+                    <li><CheckCircle2 size={20} /><div><strong>Write for the client</strong><p>Include a focused cover letter and your expert answer.</p></div></li>
+                    <li><CheckCircle2 size={20} /><div><strong>Review and apply</strong><p>The job&apos;s Connects are deducted when you submit.</p></div></li>
+                  </ul>
+                </div>
+              )}
+
+              <footer className="uw-welcome-actions">
+                <div className="uw-welcome-dots" aria-label={`Card ${onboardingCard + 1} of 2`}>
+                  <span className={onboardingCard === 0 ? "active" : ""} />
+                  <span className={onboardingCard === 1 ? "active" : ""} />
+                </div>
+                <button
+                  className="uw-welcome-next"
+                  onClick={onboardingCard === 0 ? () => setOnboardingCard(1) : closeOnboarding}
+                  type="button"
+                >
+                  {onboardingCard === 0 ? "Next" : "Get started"} <ArrowRight size={17} />
+                </button>
+              </footer>
+            </article>
+          </section>
+        </div>
+      ) : null}
       <Header mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
 
       <section className="uw-home-hero">
@@ -204,6 +296,18 @@ export function PlatformClient() {
               />
             </div>
             <div className="field">
+              <label htmlFor="candidate-email">Email address</label>
+              <input
+                autoComplete="email"
+                id="candidate-email"
+                inputMode="email"
+                type="email"
+                value={candidateEmail}
+                onChange={(event) => setCandidateEmail(event.target.value)}
+                placeholder="Enter candidate email"
+              />
+            </div>
+            <div className="field">
               <label htmlFor="candidate-headline">Short description</label>
               <input
                 id="candidate-headline"
@@ -251,40 +355,6 @@ export function PlatformClient() {
         </div>
       ) : null}
 
-      <section className="uw-onboard" aria-label="Getting started">
-        <article className="uw-onboard-card">
-          <div className="uw-onboard-head">
-            <span className="uw-onboard-icon"><UserRound size={22} /></span>
-            <div>
-              <h2>New here? Start in 3 steps</h2>
-              <p>A quick guide to using this platform.</p>
-            </div>
-          </div>
-          <ol className="uw-onboard-steps">
-            <li><strong>Save your profile.</strong> Add your name and a short title above, then press <em>Save profile</em>. You must do this before applying.</li>
-            <li><strong>Choose jobs that fit.</strong> You have {startingConnects} Connects. Each job costs 5 to 30 Connects, so pick the opportunities that matter most.</li>
-            <li><strong>Open a job and apply.</strong> Click <em>View job</em>, complete the proposal, and submit. Your applications appear in your progress panel.</li>
-          </ol>
-        </article>
-
-        <article className="uw-onboard-card">
-          <div className="uw-onboard-head">
-            <span className="uw-onboard-icon"><BriefcaseBusiness size={22} /></span>
-            <div>
-              <h2>How to apply for a job</h2>
-              <p>What each proposal needs.</p>
-            </div>
-          </div>
-          <ul className="uw-onboard-list">
-            <li><CheckCircle2 size={16} /> Enter your <strong>bid amount</strong> for the job.</li>
-            <li><CheckCircle2 size={16} /> Pick how you want to be paid. <strong>By milestone</strong> also needs a milestone title and description.</li>
-            <li><CheckCircle2 size={16} /> Write your <strong>cover letter</strong> and your <strong>expert answer</strong> to the screening questions.</li>
-            <li><CheckCircle2 size={16} /> Press <strong>Apply now</strong>. The job&apos;s Connects are deducted from your balance.</li>
-          </ul>
-          <a className="uw-onboard-cta" href="#open-jobs">Browse open jobs <ArrowRight size={15} /></a>
-        </article>
-      </section>
-
       <section className="uw-jobs-board" id="open-jobs" aria-label="Open jobs">
         <div className="uw-job-feed">
           <header className="uw-feed-header">
@@ -316,7 +386,11 @@ export function PlatformClient() {
             const viewed = viewedJobIds.includes(job.id);
 
             return (
-              <article className="job-card uw-feed-job" key={job.id}>
+              <article
+                className="job-card uw-feed-job uw-clickable-job"
+                key={job.id}
+              >
+                <Link aria-label={`Open job: ${job.title}`} className="uw-card-link" href={`/jobs/${job.id}`} />
                 <div className="uw-job-overline">
                   <span>Posted {job.postedAgo}</span><i>•</i><span>Proposals: {job.bids.length}</span>
                   <div className="uw-job-icon-actions" aria-label="Job actions">
@@ -324,7 +398,7 @@ export function PlatformClient() {
                     <button aria-label="Save job" type="button"><Heart size={21} /></button>
                   </div>
                 </div>
-                <h3><Link href={`/jobs/${job.id}`}>{job.title}</Link></h3>
+                <h3>{job.title}</h3>
                 <p className="uw-job-terms">{job.budget} · {job.level} · Est. time: 1 to 3 months</p>
                 <p className="job-summary">{job.summary}</p>
                 <div className="skills">
@@ -340,7 +414,11 @@ export function PlatformClient() {
                   {viewed ? <span><Eye size={16} /> Client viewed</span> : null}
                 </div>
                 <div className="uw-job-footer-actions">
-                  <span>{job.connectsRequired} Connects required</span>
+                  <div className="uw-job-bid-summary">
+                    <span>{job.connectsRequired} Connects required</span>
+                    <span>{job.bids.length} freelancer bids</span>
+                    <span>Top visibility bid: {Math.max(...job.bids.map((bid) => bid.connectsSpent))} Connects</span>
+                  </div>
                   <Link className="uw-open-job" href={`/jobs/${job.id}`}>
                     {applied ? <CheckCircle2 size={16} /> : <BriefcaseBusiness size={16} />}
                     {applied ? "Applied" : "View job"}
