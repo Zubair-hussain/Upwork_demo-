@@ -4,7 +4,7 @@ import type { Application } from "@/lib/assessment";
 import { verifyAdminJwt } from "@/lib/adminAuth";
 import { getAllCandidates, setRecordSelection, upsertSubmission } from "@/lib/store";
 
-// Node runtime so the file-backed store (fs) works.
+// Node runtime so the store (firebase-admin in prod, fs locally) works.
 export const runtime = "nodejs";
 // Never cache: the admin must always see the latest candidate data.
 export const dynamic = "force-dynamic";
