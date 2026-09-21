@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@vitejs/plugin-react": "^5.0.2",
+    "firebase-admin": "^13.10.0",
     "lucide-react": "^0.468.0",
     "next": "^15.5.3",
     "react": "^19.1.1",

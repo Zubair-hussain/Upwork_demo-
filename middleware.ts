@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 // Temporary application pause. Candidate pages return a real 404, while the
 // admin and client review areas remain available. Set this to false to reopen.
-const applicationsPaused = true;
+const applicationsPaused = false;
 
 const closedPage = `<!doctype html>
 <html lang="en">
