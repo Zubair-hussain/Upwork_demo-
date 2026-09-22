@@ -2502,6 +2502,153 @@ button {
   backdrop-filter: blur(12px);
 }
 
+/* Reference-matched homepage 404. These styles are isolated so the existing
+   marketplace pages keep their original appearance. */
+.home-404 {
+  position: fixed;
+  z-index: 2000;
+  inset: 0;
+  overflow: auto;
+  min-height: 100vh;
+  color: #f2f2f2;
+  background: #151515;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.home-404-logo {
+  position: absolute;
+  top: 37px;
+  left: 50px;
+  color: #050505;
+  font-size: 31px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -2.8px;
+}
+
+.home-404-content {
+  position: absolute;
+  top: 17.5%;
+  left: 50%;
+  display: flex;
+  width: min(760px, calc(100% - 40px));
+  align-items: center;
+  flex-direction: column;
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+.home-404-art {
+  display: block;
+  width: 255px;
+  height: 248px;
+  margin-bottom: 49px;
+}
+
+.home-404-message h1 {
+  margin: 0 0 15px;
+  color: #f7f7f7;
+  font-size: 43px;
+  font-weight: 400;
+  line-height: 1.14;
+  letter-spacing: -1.25px;
+}
+
+.home-404-message p {
+  margin: 0;
+  color: #a9a9a9;
+  font-size: 22px;
+  line-height: 1.42;
+}
+
+.home-404-message a {
+  color: #14a800;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+.home-404-button {
+  display: inline-flex;
+  min-width: 231px;
+  min-height: 54px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 56px;
+  border-radius: 9px;
+  padding: 12px 28px;
+  color: #fff;
+  background: #14a800;
+  font-size: 21px;
+  line-height: 1;
+  transition: background-color 150ms ease;
+}
+
+.home-404-button:hover,
+.home-404-button:focus-visible {
+  background: #108a00;
+}
+
+.home-404-button:focus-visible,
+.home-404-logo:focus-visible,
+.home-404-message a:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 4px;
+}
+
+.home-404-footer {
+  position: absolute;
+  bottom: 47px;
+  left: 50%;
+  color: #a5a5a5;
+  font-size: 18px;
+  line-height: 1.25;
+  transform: translateX(-50%);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.home-404-footer p {
+  margin: 0 0 11px;
+}
+
+.home-404-footer p:last-child {
+  margin-top: 36px;
+  margin-bottom: 0;
+}
+
+@media (max-height: 800px) and (min-width: 701px) {
+  .home-404-content { top: 10%; }
+  .home-404-art { width: 210px; height: 204px; margin-bottom: 28px; }
+  .home-404-button { margin-top: 30px; }
+  .home-404-footer { bottom: 24px; }
+  .home-404-footer p:last-child { margin-top: 18px; }
+}
+
+@media (max-width: 700px) {
+  .home-404-logo { top: 24px; left: 24px; font-size: 27px; }
+
+  .home-404 {
+    min-height: 100svh;
+    padding: 92px 22px 36px;
+  }
+
+  .home-404-content,
+  .home-404-footer {
+    position: static;
+    width: 100%;
+    transform: none;
+  }
+
+  .home-404-art { width: 190px; height: 185px; margin-bottom: 28px; }
+  .home-404-message h1 { font-size: 32px; }
+  .home-404-message p { font-size: 17px; }
+  .home-404-break { display: none; }
+  .home-404-button { min-width: 205px; min-height: 50px; margin-top: 36px; font-size: 18px; }
+  .home-404-footer { margin-top: 74px; font-size: 15px; }
+  .home-404-footer p:last-child { margin-top: 28px; }
+}
+
 .uw-welcome-dialog {
   position: relative;
   width: min(620px, 100%);
